@@ -16,7 +16,12 @@ function setOptions(options) {
         const el = document.createElement('button');
         el.className = 'option';
         el.innerHTML = `<i class="${safeIcon(opt.icon)}"></i><span>${esc(opt.label)}</span>`;
-        el.addEventListener('click', () => post('select', { index: i + 1 }));
+        // mousedown, not click: the first click after NUI focus switches can lose its mousedown
+        el.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            e.stopPropagation();
+            post('select', { index: i + 1 });
+        });
         list.appendChild(el);
     });
 }
@@ -29,6 +34,8 @@ window.addEventListener('message', ({ data }) => {
     }
 });
 
-window.addEventListener('keydown', (e) => { if (e.key === 'Escape' || e.key === 'Alt') post('close'); });
+// Escape closes. Alt is ignored on purpose: the player is usually still holding it when the
+// menu takes focus, and its key-repeat would close the menu straight away.
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape' || e.key === 'Backspace') post('close'); });
 window.addEventListener('contextmenu', (e) => { e.preventDefault(); post('close'); });
 window.addEventListener('mousedown', (e) => { if (e.target === document.body) post('close'); });
