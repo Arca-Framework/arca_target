@@ -67,15 +67,20 @@ end
 
 local function collect(list, out, entity, distance, coords, extra)
     if not list then return end
+    out.seen = out.seen or {}
     for i = 1, #list do
         local opt = list[i]
-        if distance <= (opt.distance or TargetConfig.DefaultDistance) and hasGroup(opt.groups) then
+        -- the same option can match twice (e.g. a model option and a zone around that model): show it once
+        if not (opt.name and out.seen[opt.name]) and distance <= (opt.distance or TargetConfig.DefaultDistance) and hasGroup(opt.groups) then
             local ok = true
             if opt.canInteract then
                 local success, res = pcall(opt.canInteract, entity, distance, coords, opt.name)
                 ok = success and res
             end
-            if ok then out[#out + 1] = { opt = opt, zone = extra } end
+            if ok then
+                out[#out + 1] = { opt = opt, zone = extra }
+                if opt.name then out.seen[opt.name] = true end
+            end
         end
     end
 end
